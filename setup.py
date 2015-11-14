@@ -11,13 +11,6 @@ with open("requirements.txt") as requirements:
     required = requirements.read().splitlines()
 
 package_data = {}
-def get_package_data(package, base_dir):
-    for dirpath, dirnames, filenames in os.walk(base_dir):
-        dirpath = dirpath[len(package)+1:]  # Strip package dir
-        for filename in filenames:
-            package_data.setdefault(package, []).append(os.path.join(dirpath, filename))
-        for dirname in dirnames:
-            get_package_data(package, dirname)
 
 kwargs = {
     "name": "notouch",
