@@ -1,5 +1,5 @@
 import tornado.web
-import rethinkdb as r
+import rethinkdb
 
 import json
 
@@ -29,8 +29,8 @@ def returnsJSON(func):
         self.write(json.dumps(ret, default=json_serializer))
         return None
     return dec
-    
-    
+
+
 class BaseHandler(tornado.web.RequestHandler):
     """
     Base class for all handlers which creates a rethinkdb database connection
@@ -42,8 +42,8 @@ class BaseHandler(tornado.web.RequestHandler):
             host = app.rethinkdb_host
             port = app.rethinkdb_port
             db = app.rethinkdb_db
-            r.set_loop_type("tornado")
-            app.conn = r.connect(host=host, port=port, db=db)
+            rethinkdb.set_loop_type("tornado")
+            app.conn = rethinkdb.connect(host=host, port=port, db=db)
 
     def on_finish(self):
         pass

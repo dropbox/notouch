@@ -1,4 +1,4 @@
-import rethinkdb as r
+import rethinkdb
 import tornado.gen
 
 from .util import BaseHandler, returnsJSON
@@ -9,4 +9,4 @@ class MainHandler(BaseHandler):
     @tornado.gen.coroutine
     def get(self):
         conn = yield self.application.conn
-        yield r.db_list().run(conn)
+        yield rethinkdb.db_list().run(conn)

@@ -1,7 +1,6 @@
 """
 Physical machine installer automation.
 """
-import rethinkdb as r
 import tornado.web
 import tornado.ioloop
 import tornado.httpserver
@@ -36,15 +35,15 @@ def main():
     tornado_kwargs = {
         "debug": args.debug,
     }
-    
-    app = Application(tornado_kwargs, 
-        rethinkdb_host=args.rethinkdb_host, 
+
+    app = Application(tornado_kwargs,
+        rethinkdb_host=args.rethinkdb_host,
         rethinkdb_port=args.rethinkdb_port,
         rethinkdb_db=args.rethinkdb_db
     )
 
     print "Starting notouch server on {}:{}...".format(args.address, args.port)
-    
+
     server = tornado.httpserver.HTTPServer(app)
     server.bind(args.port, args.address)
     if args.debug:

@@ -1,4 +1,4 @@
-import rethinkdb as r
+import rethinkdb
 import tornado.gen
 
 from .util import BaseHandler
@@ -14,7 +14,7 @@ class DHCPAckApiV1Handler(BaseHandler):
     @tornado.gen.coroutine
     def post(self):
         conn = yield self.application.conn
-        yield r.table("dhcpack").insert(r.json(self.request.body)).run(
+        yield rethinkdb.table("dhcpack").insert(rethinkdb.json(self.request.body)).run(
             conn)
 
 
@@ -29,5 +29,5 @@ class DHCPServerStatsApiV1Handler(BaseHandler):
     @tornado.gen.coroutine
     def post(self):
         conn = yield self.application.conn
-        yield r.table("dhcpserverstats").insert(r.json(self.request.body)).run(
+        yield rethinkdb.table("dhcpserverstats").insert(rethinkdb.json(self.request.body)).run(
             conn)
