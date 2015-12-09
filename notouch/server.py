@@ -1,88 +1,15 @@
 """
 Physical machine installer automation.
 """
-import argparse
-import json
-
-import rethinkdb as r
-
 import tornado.web
 import tornado.ioloop
 import tornado.httpserver
 
+import argparse
+import json
 
-def json_serializer(obj):
-    """
-    A default json serializer that attempts to convert python date objects
-        into a string.
-    """
-    if hasattr(obj, "isoformat"):
-        return obj.isoformat()
-    raise TypeError
+from .app import Application
 
-
-def returnsJSON(func):
-    """
-    Python decorator for handlers returning JSON data.
-
-    * Sets Content-Type header to application/json.
-    * Takes return value and calls json.dump with a safe converter for objects
-        like datetimes that won't serialize into json.
-    * Calls "write" to return data to the client.
-    """
-    def dec(self, *args, **kwargs):
-        ret = func(self, *args, **kwargs)
-        self.set_header("Content-Type", "application/json")
-        self.write(json.dumps(ret, default=json_serializer))
-        return None
-    return dec
-
-
-class BaseHandler(tornado.web.RequestHandler):
-    """
-    Base class for all handlers which creates a rethinkdb database connection
-    object per application object for multi-processs safety.
-    """
-    def initialize(self):
-        app = self.application
-        if app.conn is None:
-            host = app.rethinkdb_host
-            port = app.rethinkdb_port
-            db = app.rethinkdb_db
-            app.conn = r.connect(host=host, port=port, db=db)
-
-    def on_finish(self):
-        pass
-
-class MainHandler(BaseHandler):
-
-    @returnsJSON
-    def get(self):
-        return r.db_list().run(self.application.conn)
-
-
-class DHCPAckHandler(BaseHandler):
-    """
-    DHCP Ack API Handler - Log DHCP ack's from dhcp servers.
-    """
-
-    def get(self):
-        pass
-
-    def post(self):
-        r.table("dhcpack").insert(r.json(self.request.body)).run(self.application.conn)
-
-
-class DHCPServerStatsHandler(BaseHandler):
-    """
-    DHCP Server Stats API Handler - Log aggregated server stats.
-    """
-
-    def get(self):
-        pass
-
-    def post(self):
-        r.table("dhcpserverstats").insert(r.json(self.request.body)).run(self.application.conn)
 
 def main():
 
@@ -105,20 +32,22 @@ def main():
 
     args = parser.parse_args()
 
-    app = tornado.web.Application([
-        (r"/", MainHandler),
-        (r"/api/v1/dhcp/ack", DHCPAckHandler),
-        (r"/api/v1/dhcp/server_stats", DHCPServerStatsHandler),
-    ], debug=args.debug)
-    app.rethinkdb_host = args.rethinkdb_host
-    app.rethinkdb_port = args.rethinkdb_port
-    app.rethinkdb_db = args.rethinkdb_db
-    app.conn = None
+    tornado_kwargs = {
+        "debug": args.debug,
+    }
+
+    app = Application(tornado_kwargs,
+        rethinkdb_host=args.rethinkdb_host,
+        rethinkdb_port=args.rethinkdb_port,
+        rethinkdb_db=args.rethinkdb_db
+    )
+
+    print "Starting notouch server on {}:{}...".format(args.address, args.port)
 
     server = tornado.httpserver.HTTPServer(app)
     server.bind(args.port, args.address)
     if args.debug:
-        print "Tornado running in debug mode can not use multi-process."
+        print "Tornado running in debug mode, spawning single process."
         args.workers = 1
     try:
         server.start(args.workers)
